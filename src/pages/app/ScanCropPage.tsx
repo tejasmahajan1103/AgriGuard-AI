@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Image as ImageIcon, ScanLine, Loader2, CheckCircle2, AlertCircle, RefreshCw, Bot } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, ScanLine, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { scanService } from '../../services/scanService';
+import { getMockScanResult } from '../../data/mockResponses';
 import type { UploadImageResult } from '../../types';
 
 export default function ScanCropPage() {
@@ -13,6 +14,7 @@ export default function ScanCropPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadImageResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -88,16 +90,25 @@ export default function ScanCropPage() {
     setUploadResult(null);
     setUploadError(null);
     setIsUploading(false);
+    setIsAnalyzing(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleViewResult = () => {
-    if (!uploadResult) return;
-    // Clear any previous mock result to prevent fake disease data
-    sessionStorage.removeItem('lastScanResult');
-    sessionStorage.setItem('lastScanUpload', JSON.stringify(uploadResult));
-    sessionStorage.setItem('lastScanImage', preview || '');
-    navigate('/app/scan/result/new');
+  const handleAnalyze = async () => {
+    if (!file) return;
+    setIsAnalyzing(true);
+    try {
+      const result = await getMockScanResult();
+      // Store result and image in sessionStorage for the result page
+      sessionStorage.setItem('lastScanResult', JSON.stringify(result));
+      sessionStorage.setItem('lastScanImage', preview || '');
+      if (uploadResult) {
+        sessionStorage.setItem('lastScanUpload', JSON.stringify(uploadResult));
+      }
+      navigate('/app/scan/result/new');
+    } catch {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -237,38 +248,48 @@ export default function ScanCropPage() {
 
             {/* Upload Success State */}
             {uploadResult && (
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-emerald-900">Crop image uploaded successfully.</p>
-                    <p className="text-xs text-emerald-700 mt-0.5 truncate">
-                      S3 Object Key: <span className="font-mono font-medium text-emerald-800">{uploadResult.key}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 text-xs">
-                  <Bot className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span>AI disease analysis is not connected yet. Image has been securely stored in AWS S3.</span>
+              <div className="flex items-start gap-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-emerald-900">Crop image uploaded successfully to S3.</p>
+                  <p className="text-xs text-emerald-700 mt-0.5 truncate">
+                    S3 Object Key: <span className="font-mono font-medium text-emerald-800">{uploadResult.key}</span>
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* Action button */}
+            {/* Analyze button */}
             <Button
               className="w-full"
               size="lg"
-              onClick={handleViewResult}
-              disabled={isUploading || !uploadResult}
-              icon={<ScanLine className="w-5 h-5" />}
+              onClick={handleAnalyze}
+              disabled={isUploading}
+              isLoading={isAnalyzing}
+              icon={
+                isAnalyzing ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <ScanLine className="w-5 h-5" />
+                )
+              }
             >
-              {isUploading
+              {isAnalyzing
+                ? 'Analyzing...'
+                : isUploading
                 ? 'Uploading to S3...'
-                : uploadResult
-                ? 'View Upload & Scan Details'
-                : 'Upload Crop Image'}
+                : 'Start AI Analysis'}
             </Button>
+
+            {isAnalyzing && (
+              <div className="text-center py-4">
+                <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  AI is analyzing your crop image...
+                </div>
+                <p className="text-xs text-slate-400 mt-1">This may take a few seconds</p>
+              </div>
+            )}
           </div>
         )}
       </Card>

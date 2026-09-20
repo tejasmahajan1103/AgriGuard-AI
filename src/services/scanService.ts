@@ -6,6 +6,7 @@
 import { UPLOAD_API_URL } from '../config/upload';
 import { cognitoAuth } from './cognitoAuth';
 import { mockScans } from '../data/mockData';
+import { getMockScanResult } from '../data/mockResponses';
 import type { CropScan, ScanResult, UploadUrlResponse, UploadImageResult } from '../types';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -170,8 +171,8 @@ export const scanService = {
     return mockScans.filter((s) => s.cropId === cropId);
   },
 
-  // AI disease analysis pipeline is not connected yet
-  async analyzeCropImage(_file: File): Promise<ScanResult | null> {
-    return null;
+  // Mock analysis for UI demo behavior
+  async analyzeCropImage(_file: File): Promise<ScanResult> {
+    return getMockScanResult();
   },
 };
