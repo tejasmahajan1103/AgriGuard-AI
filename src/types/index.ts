@@ -137,6 +137,17 @@ export interface WeatherData {
   location: string;
 }
 
+export interface RealWeatherData {
+  message?: string;
+  location: string;
+  temperature: number;
+  feels_like: number;
+  humidity: number;
+  weather: string;
+  wind_speed: number;
+}
+
+
 export interface WeatherForecast {
   date: string;
   day: string;
