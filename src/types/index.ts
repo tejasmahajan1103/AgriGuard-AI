@@ -147,6 +147,21 @@ export interface RealWeatherData {
   wind_speed: number;
 }
 
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  key: string;
+  expiresIn: number;
+}
+
+export interface UploadImageResult {
+  key: string;
+  expiresIn: number;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
 
 export interface WeatherForecast {
   date: string;

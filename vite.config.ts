@@ -12,6 +12,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      '/upload-url': {
+        target: 'https://a53cwd7442.execute-api.eu-north-1.amazonaws.com',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 })
